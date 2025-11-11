@@ -8,6 +8,10 @@ Step 4: Student and Faculty Features Implementation - Status: Completed - Notes:
 
 Step 5: Admin and Faculty Management Features - Status: Completed - Notes: Added views for admin: register faculty (with subjects), user management (list all users). For faculty: create sessions (with subject/class_group), delete sessions. Added AttendanceReportView for faculty/admin to see all attendance. Updated URLs with new endpoints. Fixed import for Subject/ClassGroup. Sessions can be created with recurring flag, but timetable logic needs expansion for recurring display. Tested endpoints work with role checks.
 
+Step 6: Git Commit and Push - Status: Completed - Notes: Added all files to git, committed with message "Initial commit: Django backend with models, APIs, and React Native frontend setup". Pushed to origin/main successfully. Repository now has initial codebase.
+
+Step 7: React Native Frontend Setup - Status: Completed - Notes: Installed navigation, axios, QR scanner, paper. Created AuthContext for JWT storage/login/logout. Created screens: Login (POST login), Register (POST register), Dashboard (role-based nav), Timetable (GET timetable), Attendance (GET attendance), QRScanner (scan and POST mark). Configured App.js with Stack/Tab navigators. Installed AsyncStorage. Ready for testing with emulator.
+
 Update settings.py: Added 'rest_framework' and 'users' to INSTALLED_APPS, set AUTH_USER_MODEL to 'users.User'.
 Define Models in users/models.py: As shown above (User, Student, Faculty, Subject, ClassGroup, Session, Attendance).
 Register in admin.py: All models registered with list_display for admin panel.
