@@ -10,7 +10,28 @@ Step 5: Admin and Faculty Management Features - Status: Completed - Notes: Added
 
 Step 6: Git Commit and Push - Status: Completed - Notes: Added all files to git, committed with message "Initial commit: Django backend with models, APIs, and React Native frontend setup". Pushed to origin/main successfully. Repository now has initial codebase.
 
-Step 7: React Native Frontend Setup - Status: Completed - Notes: Installed navigation, axios, QR scanner, paper. Created AuthContext for JWT storage/login/logout. Created screens: Login (POST login), Register (POST register), Dashboard (role-based nav), Timetable (GET timetable), Attendance (GET attendance), QRScanner (scan and POST mark). Configured App.js with Stack/Tab navigators. Installed AsyncStorage. Ready for testing with emulator.
+Step 7: React Native Frontend Setup - Status: Completed - Notes: Installed navigation, axios, QR scanner, paper. Created AuthContext for JWT storage/login/logout. Created screens: Login (POST login), Register (POST register), Dashboard (role-based nav), Timetable (GET timetable), Attendance (GET attendance), QRScanner (scan and POST mark). Configured App.js with Stack/Tab navigators. Installed AsyncStorage. Installed gesture-handler, reanimated, screens, safe-area-context, worklets-core dependencies. Updated babel.config.js with reanimated plugin. Updated index.js to import gesture-handler. Successfully built and installed on Android emulator (Medium_Phone_API_36.1). App runs without errors.
+
+Step 8: React Native Build Issues and Decision to Switch to Web App - Status: Completed - Notes: React Native build failed due to JDK 25 incompatibility (downgraded to JDK 17). Hit Windows MAX_PATH limit (260 chars) - relocated project to shorter path D:\AttendanceQR\. Fixed MainApplication.kt soloader imports. Build progressed to 65% but had C++ compilation warnings. After multiple troubleshooting attempts, decided to drop React Native due to excessive complexity. Chose single web app approach with React + Tailwind CSS for both mobile and desktop.
+>>
+>> Step 9: Web App Setup and Architecture - Status: Completed - Notes: Created React TypeScript app with Tailwind CSS. Installed axios for API calls, html5-qrcode for QR scanning, react-router-dom for navigation. Set up responsive design that adapts between mobile (QR scanning focus) and desktop (dashboard focus). Created AuthContext for JWT authentication. Built components: Login, Register, Dashboard (responsive), QRScanner (mobile), Attendance (view records), Timetable (weekly schedule), AdminDashboard (management). App runs on http://localhost:3000 with backend at http://localhost:8000.
+>>
+>> Web App Features:
+>> - Responsive Design: Mobile shows QR scanner prominently, desktop shows full dashboard
+>> - Authentication: JWT-based login/logout with role-based access
+>> - QR Scanning: Uses html5-qrcode library for camera access on mobile
+>> - Dashboard: Role-based navigation (Student/Faculty/Admin)
+>> - Attendance View: Filterable attendance records with statistics
+>> - Timetable: Weekly schedule view with day selection
+>> - Admin Panel: User and session management overview
+>> - API Integration: All endpoints connected to Django backend
+>>
+>> Architecture Benefits:
+>> - Single codebase for mobile + desktop
+>> - No app store deployment needed
+>> - Camera permissions handled by browser
+>> - Instant updates without app updates
+>> - Works on all devices with modern browsers"
 
 Update settings.py: Added 'rest_framework' and 'users' to INSTALLED_APPS, set AUTH_USER_MODEL to 'users.User'.
 Define Models in users/models.py: As shown above (User, Student, Faculty, Subject, ClassGroup, Session, Attendance).
