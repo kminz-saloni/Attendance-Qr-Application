@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 interface User {
   id: number;
@@ -40,8 +41,8 @@ const AdminDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       const [usersResponse, sessionsResponse] = await Promise.all([
-        axios.get('http://localhost:8000/api/admin/users/'),
-        axios.get('http://localhost:8000/api/sessions/'),
+        axios.get(API_ENDPOINTS.USERS),
+        axios.get(API_ENDPOINTS.SESSIONS),
       ]);
       setUsers(usersResponse.data);
       setSessions(sessionsResponse.data);

@@ -3,6 +3,7 @@ import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../shared/Layout';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 const QRScannerStudent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ const QRScannerStudent: React.FC = () => {
             const sessionId = decodedText.split('-')[0];
 
             await axios.post(
-                'http://localhost:8000/api/mark-attendance/',
+                API_ENDPOINTS.MARK_ATTENDANCE,
                 {
                     qr_code: decodedText,
                     session_id: sessionId

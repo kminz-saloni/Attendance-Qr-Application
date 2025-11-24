@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 const QRScanner: React.FC = () => {
   const scannerRef = useRef<HTMLDivElement>(null);
@@ -37,7 +38,7 @@ const QRScanner: React.FC = () => {
           }
 
           // Mark attendance
-          await axios.post(`http://localhost:8000/api/attendance/mark/${sessionId}/`);
+          await axios.post(`${API_ENDPOINTS.ATTENDANCE}mark/${sessionId}/`);
 
           setSuccess('Attendance marked successfully!');
           setTimeout(() => {
@@ -154,7 +155,7 @@ const QRScanner: React.FC = () => {
                           return;
                         }
 
-                        await axios.post(`http://localhost:8000/api/attendance/mark/${sessionId}/`);
+                        await axios.post(`${API_ENDPOINTS.ATTENDANCE}mark/${sessionId}/`);;
                         setSuccess('Attendance marked successfully!');
                         setTimeout(() => navigate('/'), 2000);
                       } catch (err: any) {

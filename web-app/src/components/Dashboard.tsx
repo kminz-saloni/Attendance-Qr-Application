@@ -2,20 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 interface Session {
   id: number;
   subject: {
     name: string;
-    code: string;
+code: string;
   };
-  class_group: {
-    name: string;
-  };
-  start_time: string;
-  end_time: string;
-  qr_code: string;
-  date: string;
+class_group: {
+  name: string;
+};
+start_time: string;
+end_time: string;
+qr_code: string;
+date: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -40,7 +41,7 @@ const Dashboard: React.FC = () => {
 
   const fetchSessions = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/sessions/');
+      const response = await axios.get(API_ENDPOINTS.SESSIONS);
       setSessions(response.data);
     } catch (error) {
       console.error('Failed to fetch sessions:', error);

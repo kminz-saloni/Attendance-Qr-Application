@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../shared/Layout';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface Session {
     id: number;
@@ -42,9 +43,9 @@ const StudentDashboard: React.FC = () => {
     const fetchData = async () => {
         try {
             const [sessionsRes, profileRes, attendanceRes] = await Promise.all([
-                axios.get('http://localhost:8000/api/upcoming-sessions/').catch(() => ({ data: [] })),
-                axios.get('http://localhost:8000/api/user/profile/').catch(() => ({ data: {} })),
-                axios.get('http://localhost:8000/api/attendance/my-attendance/').catch(() => ({ data: [] }))
+                axios.get(API_ENDPOINTS.UPCOMING_SESSIONS).catch(() => ({ data: [] })),
+                axios.get(API_ENDPOINTS.PROFILE).catch(() => ({ data: {} })),
+                axios.get(API_ENDPOINTS.MY_ATTENDANCE).catch(() => ({ data: [] }))
             ]);
 
             setUpcomingSessions(sessionsRes.data.slice(0, 3));

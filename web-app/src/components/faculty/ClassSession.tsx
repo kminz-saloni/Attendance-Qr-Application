@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../shared/Layout';
 import axios from 'axios';
 import QRCode from 'qrcode';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface Session {
     id: number;
@@ -63,7 +64,7 @@ const ClassSession: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             };
 
-            const response = await axios.get(`http://localhost:8000/api/sessions/${sessionId}/`, config);
+            const response = await axios.get(`${API_ENDPOINTS.SESSIONS}${sessionId}/`, config);
             setSession(response.data);
 
             if (response.data.active && response.data.qr_code) {
@@ -71,7 +72,7 @@ const ClassSession: React.FC = () => {
             }
 
             // Fetch attendance
-            const attendanceRes = await axios.get(`http://localhost:8000/api/attendance/?session=${sessionId}`, config);
+            const attendanceRes = await axios.get(`${API_ENDPOINTS.ATTENDANCE}?session=${sessionId}`, config);
             setAttendance(attendanceRes.data);
         } catch (error: any) {
             console.error('Failed to fetch session:', error);
@@ -94,7 +95,7 @@ const ClassSession: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             };
 
-            const response = await axios.post('http://localhost:8000/api/generate-qr/', {
+            const response = await axios.post(API_ENDPOINTS.GENERATE_QR, {
                 session_id: sessionId
             }, config);
 
@@ -118,7 +119,7 @@ const ClassSession: React.FC = () => {
 
         try {
             const response = await axios.post(
-                'http://localhost:8000/api/generate-qr/',
+                API_ENDPOINTS.GENERATE_QR,
                 { session_id: sessionId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -136,7 +137,7 @@ const ClassSession: React.FC = () => {
 
         try {
             await axios.post(
-                'http://localhost:8000/api/stop-attendance/',
+                API_ENDPOINTS.STOP_ATTENDANCE,
                 { session_id: sessionId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

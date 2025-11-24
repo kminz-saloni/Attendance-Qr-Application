@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../shared/Layout';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface Session {
     id: number;
@@ -36,7 +37,7 @@ const FacultyDashboard: React.FC = () => {
             const config = {
                 headers: { Authorization: `Bearer ${token}` }
             };
-            const response = await axios.get('http://localhost:8000/api/sessions/', config);
+            const response = await axios.get(API_ENDPOINTS.SESSIONS, config);
             const today = new Date().toISOString().split('T')[0];
 
             const todayOnly = response.data.filter((s: Session) => s.date === today);

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../shared/Layout';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface AttendanceRecord {
     id: number;
@@ -24,13 +26,13 @@ const AttendanceHistory: React.FC = () => {
 
     const fetchAttendance = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/attendance/my-attendance/');
+            const response = await axios.get(API_ENDPOINTS.MY_ATTENDANCE);
             setRecords(response.data);
         } catch (error) {
             console.error('Failed to fetch attendance:', error);
         } finally {
             setIsLoading(false);
-        }
+        };
     };
 
     const filterRecords = () => {

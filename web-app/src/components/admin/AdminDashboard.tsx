@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import Layout from '../shared/Layout';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface User {
     id: number;
@@ -23,7 +24,7 @@ const AdminDashboard: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/users/');
+            const response = await axios.get(API_ENDPOINTS.USERS);
             const users = response.data;
             setStudents(users.filter((u: User) => u.role === 'student'));
             setFaculty(users.filter((u: User) => u.role === 'faculty'));
@@ -163,7 +164,7 @@ const AdminDashboard: React.FC = () => {
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <a
-                            href="http://localhost:8000/admin"
+                            href={API_ENDPOINTS.ADMIN_PANEL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
