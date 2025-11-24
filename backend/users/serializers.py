@@ -1,0 +1,280 @@
+from rest_framework import serializers
+from .models import User, Student, Faculty, Subject, ClassGroup, Session, Attendance
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'role', 'user_id', 'first_name', 'last_name']
+
+class SubjectSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Subject
+        fields = ['id', 'name', 'code', 'year', 'display_name']
+    
+    def get_display_name(self, obj):
+        return f"{obj.code} - {obj.name}"
+
+class FacultySerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    subjects = SubjectSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Faculty
+        fields = ['id', 'user', 'role', 'subjects']
+
+class ClassGroupSerializer(serializers.ModelSerializer):
+    subjects = SubjectSerializer(many=True, read_only=True)
+    name = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = ClassGroup
+        fields = ['id', 'year', 'department', 'section', 'subjects', 'subjects_hash', 'name']
+        read_only_fields = ['subjects_hash']
+
+class StudentSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    subjects = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Subject.objects.all(),
+        required=False
+    )
+    class_group = ClassGroupSerializer(read_only=True)
+    
+    # Write-only fields for registration
+    username = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False)
+    first_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False)
+    email = serializers.EmailField(write_only=True, required=False)
+    
+    class Meta:
+        model = Student
+        fields = ['id', 'user', 'department', 'section', 'year', 'subjects', 'subjects_hash', 
+                  'class_group', 'username', 'password', 'first_name', 'last_name', 'email']
+        read_only_fields = ['subjects_hash', 'class_group']
+    
+    def validate_subjects(self, value):
+        """Validate exactly 7 subjects and subject-year mapping"""
+        if len(value) != 7:
+            raise serializers.ValidationError(
+                f"You must select exactly 7 subjects. You selected {len(value)}."
+            )
+        
+        # Get student's year from initial_data or instance
+        student_year = self.initial_data.get('year') or (self.instance.year if self.instance else None)
+        
+        if student_year:
+            # Convert to int if it's a string (from form data)
+            student_year = int(student_year) if isinstance(student_year, str) else student_year
+            
+            # Validate all subjects belong to student's year
+            for subject in value:
+                if subject.year != student_year:
+                    raise serializers.ValidationError(
+                        f"Subject '{subject.name}' belongs to year {subject.year}, "
+                        f"but you are in year {student_year}. All subjects must be from your year."
+                    )
+        
+        return value
+    
+    def create(self, validated_data):
+        """Create student with user account and auto-assign to class group"""
+        # Extract user data
+        username = validated_data.pop('username')
+        password = validated_data.pop('password')
+        first_name = validated_data.pop('first_name', '')
+        last_name = validated_data.pop('last_name', '')
+        email = validated_data.pop('email', '')
+        
+        # Extract subjects
+        subjects = validated_data.pop('subjects', [])
+        
+        # Create user
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            role='student'
+        )
+        
+        # Create student
+        student = Student.objects.create(user=user, **validated_data)
+        
+        # Add subjects
+        student.subjects.set(subjects)
+        student.save()  # This will generate subjects_hash
+        
+        # Find or create matching class group
+        class_group = self._find_or_create_class_group(student)
+        student.class_group = class_group
+        student.save()
+        
+        return student
+    
+    def _find_or_create_class_group(self, student):
+        """Find existing class group or create new one"""
+        # Try to find existing class group with same dept/section/year/subjects_hash
+        existing_group = ClassGroup.objects.filter(
+            department=student.department,
+            section=student.section,
+            year=student.year,
+            subjects_hash=student.subjects_hash
+        ).first()
+        
+        if existing_group:
+            return existing_group
+        
+        # Create new class group
+        class_group = ClassGroup.objects.create(
+            department=student.department,
+            section=student.section,
+            year=student.year
+        )
+        class_group.subjects.set(student.subjects.all())
+        class_group.save()  # This will generate subjects_hash
+        
+        return class_group
+
+class SessionSerializer(serializers.ModelSerializer):
+    teacher = FacultySerializer(read_only=True)
+    subject = SubjectSerializer(read_only=True)
+    class_group = ClassGroupSerializer(read_only=True)
+    
+    # Write-only fields for creation
+    subject_id = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(),
+        write_only=True,
+        required=False,
+        source='subject'
+    )
+    class_group_id = serializers.PrimaryKeyRelatedField(
+        queryset=ClassGroup.objects.all(),
+        write_only=True,
+        required=False,
+        source='class_group'
+    )
+    
+    class Meta:
+        model = Session
+        fields = ['id', 'teacher', 'subject', 'class_group', 'start_time', 'end_time', 
+                  'date', 'recurring', 'qr_code', 'active', 'subject_id', 'class_group_id']
+    
+    def validate(self, data):
+        """Validate faculty teaches the subject and class group contains the subject"""
+        request = self.context.get('request')
+        if not request or not request.user:
+            raise serializers.ValidationError("Authentication required")
+        
+        try:
+            faculty = Faculty.objects.get(user=request.user)
+        except Faculty.DoesNotExist:
+            raise serializers.ValidationError("Only faculty can create sessions")
+        
+        subject = data.get('subject')
+        class_group = data.get('class_group')
+        
+        # Validate faculty teaches this subject
+        if subject and not faculty.subjects.filter(id=subject.id).exists():
+            raise serializers.ValidationError(
+                f"You are not assigned to teach '{subject.code} - {subject.name}'"
+            )
+        
+        # Validate class group contains this subject
+        if subject and class_group:
+            if not class_group.subjects.filter(id=subject.id).exists():
+                raise serializers.ValidationError(
+                    f"Class group '{class_group.name}' does not have subject '{subject.code} - {subject.name}' "
+                    f"in their curriculum"
+                )
+            
+            # Validate subject year matches class group year
+            if subject.year != class_group.year:
+                raise serializers.ValidationError(
+                    f"Subject '{subject.name}' is for year {subject.year}, "
+                    f"but class group '{class_group.name}' is year {class_group.year}"
+                )
+        
+        return data
+    
+    def create(self, validated_data):
+        """Create session with faculty from request user"""
+        request = self.context.get('request')
+        faculty = Faculty.objects.get(user=request.user)
+        
+        validated_data['teacher'] = faculty
+        return super().create(validated_data)
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(read_only=True)
+    session = SessionSerializer(read_only=True)
+    
+    # Write-only fields for marking attendance
+    session_id = serializers.PrimaryKeyRelatedField(
+        queryset=Session.objects.all(),
+        write_only=True,
+        source='session'
+    )
+    
+    class Meta:
+        model = Attendance
+        fields = ['id', 'student', 'session', 'marked_at', 'session_id']
+    
+    def validate(self, data):
+        """Validate student is enrolled in the session's subject and prevent duplicates"""
+        request = self.context.get('request')
+        if not request or not request.user:
+            raise serializers.ValidationError({
+                'error': 'Authentication required',
+                'details': 'You must be logged in to mark attendance.',
+                'suggestion': 'Please log in and try again.'
+            })
+        
+        try:
+            student = Student.objects.get(user=request.user)
+        except Student.DoesNotExist:
+            raise serializers.ValidationError({
+                'error': 'Student account not found',
+                'details': 'Only students can mark attendance.',
+                'suggestion': 'Please contact your administrator if you believe this is an error.'
+            })
+        
+        session = data.get('session')
+        
+        # CRITICAL FIX: Check if student is enrolled in the session's SUBJECT
+        # This allows students from different class groups to attend the same subject session
+        if not student.subjects.filter(id=session.subject.id).exists():
+            raise serializers.ValidationError({
+                'error': 'Subject not enrolled',
+                'details': f"You are not enrolled in '{session.subject.name}' ({session.subject.code}).",
+                'suggestion': 'Please check with your faculty or scan the QR code for a subject you are enrolled in.'
+            })
+        
+        # Validate year matches (students can only attend sessions for their year)
+        if student.year != session.subject.year:
+            raise serializers.ValidationError({
+                'error': 'Year mismatch',
+                'details': f"This session is for year {session.subject.year}, but you are in year {student.year}.",
+                'suggestion': 'Please scan the QR code for your year level.'
+            })
+        
+        # Check for duplicate attendance
+        if Attendance.objects.filter(student=student, session=session).exists():
+            raise serializers.ValidationError({
+                'error': 'Attendance already marked',
+                'details': f"You have already marked attendance for this {session.subject.name} session.",
+                'suggestion': 'You can only mark attendance once per session.'
+            })
+        
+        return data
+    
+    def create(self, validated_data):
+        """Create attendance record with student from request user"""
+        request = self.context.get('request')
+        student = Student.objects.get(user=request.user)
+        
+        validated_data['student'] = student
+        return super().create(validated_data)

@@ -17,7 +17,28 @@ const Login: React.FC = () => {
 
     try {
       await login(username, password);
-      navigate('/');
+
+      // Get user role from localStorage
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // Redirect based on role
+        switch (user.role) {
+          case 'student':
+            navigate('/student/dashboard');
+            break;
+          case 'faculty':
+            navigate('/faculty/dashboard');
+            break;
+          case 'admin':
+            navigate('/admin/dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {

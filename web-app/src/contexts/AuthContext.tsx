@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check for stored token on app start
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('access_token');
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
@@ -54,19 +54,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/token/', {
+      const response = await axios.post('http://127.0.0.1:8000/api/login/', {
         username,
         password,
       });
 
       const { access, refresh } = response.data;
       setToken(access);
-      localStorage.setItem('token', access);
-      localStorage.setItem('refreshToken', refresh);
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
       // Get user info
-      const userResponse = await axios.get('http://localhost:8000/api/user/profile/');
+      const userResponse = await axios.get('http://127.0.0.1:8000/api/user/profile/');
       setUser(userResponse.data);
       localStorage.setItem('user', JSON.stringify(userResponse.data));
     } catch (error) {
@@ -76,7 +76,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: any) => {
     try {
-      await axios.post('http://localhost:8000/api/register/', userData);
+      // Determine the correct endpoint based on role
+      const endpoint = userData.role === 'student'
+        ? 'http://127.0.0.1:8000/api/register/student/'
+        : 'http://127.0.0.1:8000/api/register/faculty/';
+
+      await axios.post(endpoint, userData);
     } catch (error) {
       throw error;
     }
@@ -85,8 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
   };

@@ -1,0 +1,53 @@
+﻿
+============================================================
+  QR ATTENDANCE WORKFLOW TEST
+============================================================
+
+============================================================
+  1. Registering Student
+============================================================
+[OK] Student already exists
+
+============================================================
+  2. Logging in as Student
+============================================================
+[OK] Student logged in successfully
+  Role: student
+  Token: eyJhbGciOiJIUzI1NiIs...
+
+============================================================
+  3. Getting Student Profile
+============================================================
+[OK] Profile retrieved
+  {
+  "user_id": "7C7DC0C2",
+  "username": "test_student",
+  "email": "student@test.com",
+  "first_name": "Test",
+  "last_name": "Student",
+  "role": "student",
+  "student_info": {
+    "department": "CSE",
+    "branch": "CSE",
+    "section": "A",
+    "year": 2
+  }
+}
+
+============================================================
+  4. Getting Available Sessions
+============================================================
+[OK] Found 0 sessions
+
+============================================================
+  MANUAL SETUP REQUIRED
+============================================================
+No sessions found. Please:
+1. Login as faculty at http://localhost:3000/login
+2. Create a session from faculty dashboard
+3. Generate QR code for the session
+4. Use the QR scanner to test
+
+Student credentials for testing:
+  Username: test_student
+  Password: testpass123
